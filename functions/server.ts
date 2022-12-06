@@ -35,6 +35,7 @@ app.use(cors(corsOptions))
 
 const router = express.Router();
 
+console.log(process.env.NODE_ENV)
 
 if(process.env.NODE_ENV === "development"){
   const mainApp = require("../src")
@@ -61,7 +62,9 @@ if(process.env.NODE_ENV === "development"){
   mainApp(router)
   
   app.get("/", function (req, res){
-    res.send("with app v3")
+    res.send(`<?php
+
+    echo 'Hello, World!';`)
   })
   
   // /.netlify/functions
@@ -78,6 +81,7 @@ if(process.env.NODE_ENV === "development"){
 
 
 // access if from  /.netlify/functions/server
+
 //   router.get("/", (r, res)=>{
 //     res.send("hi")
 //   })
@@ -87,6 +91,14 @@ if(process.env.NODE_ENV === "development"){
 //     res.send("ap")
 // })
 
+app.get("/", function (req, res){
+  
+  res.write(`<?php
+
+    echo 'Hello, World!';`)
+  
+  res.end()
+})
 
 
 app.use(bodyParser.json());

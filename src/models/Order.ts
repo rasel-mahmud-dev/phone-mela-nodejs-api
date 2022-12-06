@@ -9,6 +9,8 @@ export interface OrderType{
   shipping_id: string
   order_status: string
   description: string
+  name: string
+    products: any[]
   price: number
   quantity: number
   delivery_date: Date
@@ -31,10 +33,12 @@ const schemaObject: ObjectFlags<OrderType> = {
   quantity: Number,
   price: Number,
   description: String,
+  products: Array,
+  name: String,
   product_id: {type: mongoose.Schema.Types.ObjectId, ref: "Product"},
   customer_id: {type: mongoose.Schema.Types.ObjectId, ref: "User"},
   shipper_id: {type: mongoose.Schema.Types.ObjectId, ref: "Shipper"},
-  shipping_id: {type: mongoose.Schema.Types.ObjectId, ref: "shipping_address"},
+  shipping_id: {type: mongoose.Schema.Types.ObjectId, ref: "ShippingAddress"},
   order_status: {
     type: String,
     enum: ['pending', 'delivered'],

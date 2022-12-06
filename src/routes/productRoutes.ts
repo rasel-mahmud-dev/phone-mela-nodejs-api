@@ -7,8 +7,12 @@ const productRoutes = (app: Application)=>{
   app.get("/api/products", controllers.productController.fetchProducts)
   app.get("/api/product/:id", controllers.productController.fetchProduct)
   app.post("/api/homepage-products", controllers.productController.fetchHomePageProducts)
+  app.post("/api/homepage-products/v2", controllers.productController.fetchHomePageProductsV2)
   app.post("/api/top-wishlist-products", controllers.productController.topWishlistProducts)
+  
+  
   app.post("/api/add-product", admin, controllers.productController.addProduct)
+  app.put("/api/products/update/:productId", admin, controllers.productController.updateProduct)
   
   app.post("/api/v2/filter-products", controllers.productController.filterProducts)
   
