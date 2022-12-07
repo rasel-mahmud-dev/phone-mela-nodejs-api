@@ -5,7 +5,7 @@ import {auth} from "../middleware";
 
 const wishlistRoutes = (app: Application)=>{
   
-  app.post("/api/wishlist-products", auth, controllers.wishlistController.fetchWishlistProducts)
+  app.get("/api/wishlist", auth, controllers.wishlistController.fetchWishlistProducts)
   app.post("/api/add-wishlist", auth, controllers.wishlistController.addToWishlist)
   
   app.post("/api/remove-wishlist", auth, controllers.wishlistController.removeToWishlist)
