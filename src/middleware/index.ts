@@ -1,8 +1,6 @@
 import {getToken, parseToken} from "../jwt";
 
-
 export function admin(req, res, next) {
-
     (async function () {
         try {
             let token = getToken(req)
@@ -13,8 +11,6 @@ export function admin(req, res, next) {
             if (data && data.userId) {
                 if (data.role === "admin") {
                     req.user = data
-                    // req.session.user_id = data.userId
-                    // req.session.role = data.userId
                     next()
                 } else {
                     res.status(409).json({message: "Your are not admin"})
