@@ -1,25 +1,25 @@
-import { Application} from "express";
+import express from "express";
 
-import authRoutes  from "./authRoutes"
-import brandRoutes  from "./brandRoutes"
-import cartRoutes  from "./cartRoutes"
-import orderRoutes  from "./orderRoutes"
-import productRoutes  from "./productRoutes"
-import wishlistRoutes  from "./wishlistRoutes"
-import shippingAddressRoutes  from "./shippingAddressRoutes"
+require("../models")
 
-const routes = (app: Application)=> {
-  authRoutes(app)
-  brandRoutes(app)
-  cartRoutes(app)
-  orderRoutes(app)
-  productRoutes(app)
-  wishlistRoutes(app)
-  shippingAddressRoutes(app)
-}
+import authRoutes from "./authRoutes"
+import brandRoutes from "./brandRoutes"
+import cartRoutes from "./cartRoutes"
+import orderRoutes from "./orderRoutes"
+import productRoutes from "./productRoutes"
+import wishlistRoutes from "./wishlistRoutes"
+import shippingAddressRoutes from "./shippingAddressRoutes"
+
+const router = express.Router()
 
 
+authRoutes(router)
+brandRoutes(router)
+cartRoutes(router)
+orderRoutes(router)
+productRoutes(router)
+wishlistRoutes(router)
+shippingAddressRoutes(router)
 
-
-export default routes
-module.exports = routes
+export default router
+module.exports = router

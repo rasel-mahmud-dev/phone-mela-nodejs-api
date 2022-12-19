@@ -1,4 +1,5 @@
 import { ApiRequest, ApiResponse } from "../types";
+import {NextFunction} from "express"
 import { ObjectId } from "bson";
 import Sales from "../models/Sales";
 import Product from "../models/Product";
@@ -213,7 +214,7 @@ export const fetchHomePageProductsV2 = async (
     req: Omit<Request, "body"> & {
         body: { data: ["latest" | "topFavorites" | "topSales" | "topDiscount" | "topRating" | "topBrands"] };
     },
-    res: ApiResponse<HomePageProductResponse[]>
+    res: ApiResponse<HomePageProductResponse[]>, next: NextFunction
 ) => {
     const { data } = req.body;
 
@@ -227,13 +228,13 @@ export const fetchHomePageProductsV2 = async (
         }
 
         // if memory cache is undefined then find from redis cache
-        client = await redisConnect();
-        let p = await client.get("phone_mela_homepage_data");
-        cachedData = JSON.parse(p);
+        // client = await redisConnect();
+        // let p = await client.get("phone_mela_homepage_data");
+        // cachedData = JSON.parse(p);
 
-        if (p) {
-            return res.send(cachedData);
-        }
+        // if (p) {
+        //     return res.send(cachedData);
+        // }
 
         // if redis cache also not found then fetch from mongodb
         for (let section of data) {
@@ -338,9 +339,9 @@ export const fetchHomePageProductsV2 = async (
 
         res.send(products);
         cachedData = products;
-        await client.set("phone_mela_homepage_data", JSON.stringify(products));
+        // await client.set("phone_mela_homepage_data", JSON.stringify(products));
     } catch (ex) {
-        res.send([]);
+        next(ex);
     } finally {
         // await client?.quit()
     }

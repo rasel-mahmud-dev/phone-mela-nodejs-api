@@ -1,5 +1,5 @@
 
-const app = require("../functions/server")
+const app = require("./app")
 const PORT = process.env.PORT || 1000
 
 

@@ -6,7 +6,6 @@
     "allowJs": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "jsx": "react",
     "outDir": "dist",
     "forceConsistentCasingInFileNames": true,
     "rootDir": "src",
