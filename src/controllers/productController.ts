@@ -19,7 +19,20 @@ export const fetchProducts = async (req: Request, res: Response, next: NextFunct
 
 
 export const fetchReviews = async (req: Request, res: Response, next: NextFunction) => {
+
+    const { pageNumber = 1 } = req.query;
+
+
     try {
+
+        let count = 0
+        let pageSize = 5
+
+
+        if(pageNumber == 1){
+            count = await Review.countDocuments();
+        }
+
         let data = await Review.aggregate([
             {
                 $lookup: {
@@ -34,7 +47,7 @@ export const fetchReviews = async (req: Request, res: Response, next: NextFuncti
                 $project: {
                     title: 1,
                     summary: 1,
-                    created_at: 1,
+                    createdAt: 1,
                     rate: 1,
                     customerUploads: 1,
                     customer: {
@@ -42,10 +55,19 @@ export const fetchReviews = async (req: Request, res: Response, next: NextFuncti
                         avatar: 1
                     }
                 }
-            }
-
+            },
+            {
+                $sort: {
+                    createdAt: -1
+                }
+            },
+            { $skip: (Number(pageNumber) - 1) * pageSize },
+            { $limit: pageSize},
         ])
-        res.send(data);
+        res.status(200).json({
+            reviews: data,
+            count: count
+        });
     } catch (ex) {
         res.status(500).send([]);
     }
@@ -53,7 +75,7 @@ export const fetchReviews = async (req: Request, res: Response, next: NextFuncti
 
 export const addReview = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const {title, summary, rate=1, product_id} = req.body
+        const {title, summary, rate = 1, product_id} = req.body
 
         let review = await new Review({
             title,
@@ -64,11 +86,12 @@ export const addReview = async (req: Request, res: Response, next: NextFunction)
             customerUploads: []
         })
 
-        let doc = await review.save()
-        console.log(doc)
-
-        res.status(201).send()
-
+        let doc = await (await review.save()).populate("customer_id", "first_name avatar")
+        if (doc) {
+            res.status(201).send(doc)
+        } else {
+            next(Error("Rating add fail"))
+        }
     } catch (ex) {
         next(ex)
     }
