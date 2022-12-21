@@ -114,7 +114,7 @@ export const loginCurrentUser = async (req: Request, res: Response) => {
         let data = await parseToken(token);
         if (data) {
             let User = mongoose.model("User");
-            let user: any = await User.findOne({ _id: data.userId });
+            let user: any = await User.findOne({ _id: data._id });
 
             if (!user) {
                 return res.status(404).json({ message: "User not registered" });
@@ -139,7 +139,7 @@ export const loginCurrentUser = async (req: Request, res: Response) => {
 
 export const fetchCustomerProfile = async (req: Request, res: Response) => {
     try {
-        let user: any = await User.findOne({ _id: req?.user?.userId });
+        let user: any = await User.findOne({ _id: req?.auth?._id });
 
         if (!user) {
             return res.status(404).json({ message: "User not registered" });

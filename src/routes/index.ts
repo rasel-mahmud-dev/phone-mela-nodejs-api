@@ -1,4 +1,4 @@
-import express from "express";
+import express, {Router} from "express";
 
 require("../models")
 
@@ -10,8 +10,8 @@ import productRoutes from "./productRoutes"
 import wishlistRoutes from "./wishlistRoutes"
 import shippingAddressRoutes from "./shippingAddressRoutes"
 
-const router = express.Router()
 
+const router: Router = express.Router()
 
 authRoutes(router)
 brandRoutes(router)

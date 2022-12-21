@@ -35,22 +35,24 @@ require('./passport/google')
 
 
 const app = express()
+app.use(express.json())
 
 
-const allowedOrigin = ["http://localhost:4000", "http://localhost:3000"]
+const allowedOrigin = ["http://localhost:4000", "http://localhost:3000", process.env.FRONTEND]
 
 const corsOptions = {
+    credentials: true,
     origin: (origin: any[], cb: any)=>{
         if(allowedOrigin.indexOf(origin as any) !== -1){
             cb(null, true)
         } else{
-            cb(null, true)
+            cb(null, false)
             // cb(new Error("You are Blocked"))
         }
     }
 }
 
-app.use(cors(process.env.NODE_ENV !== "development" ? corsOptions : {}))
+app.use(cors(corsOptions))
 
 app.use(passport.initialize())
 

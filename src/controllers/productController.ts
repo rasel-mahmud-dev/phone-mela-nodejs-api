@@ -1,12 +1,12 @@
-import { ApiRequest, ApiResponse } from "../types";
-import {NextFunction} from "express"
+import { ApiRequest } from "../types";
+import {NextFunction, Response, Request} from "express"
 import { ObjectId } from "bson";
 import Sales from "../models/Sales";
 import Product from "../models/Product";
 import Brand from "../models/Brand";
-import redisConnect from "../database/redis";
 
-export const fetchProducts = async (req: Request, res: ApiResponse) => {
+
+export const fetchProducts = async (req: Request, res: Response) => {
     try {
         let data = await Product.find();
         res.send(data);
@@ -15,7 +15,8 @@ export const fetchProducts = async (req: Request, res: ApiResponse) => {
     }
 };
 
-export const fetchProduct = async (req: ApiRequest, res: ApiResponse) => {
+
+export const fetchProduct = async (req: Request, res: Response) => {
     const { id } = req.params;
 
     try {
@@ -59,9 +60,9 @@ export const fetchProduct = async (req: ApiRequest, res: ApiResponse) => {
     }
 };
 
-export const addProduct = async (req: Request, res: ApiResponse) => {};
+export const addProduct = async (req: Request, res: Response) => {};
 
-export const updateProduct = async (req: ApiRequest, res: ApiResponse) => {
+export const updateProduct = async (req: ApiRequest, res: Response) => {
     const { productId } = req.params;
 
     try {
@@ -114,7 +115,7 @@ interface HomePageProductResponse {
 
 export const fetchHomePageProducts = async (
     req: Omit<Request, "body"> & { body: BodyMy },
-    res: ApiResponse<HomePageProductResponse[]>
+    res: Response<HomePageProductResponse[]>
 ) => {
     let products = [];
     const { type } = req.body;
@@ -214,7 +215,7 @@ export const fetchHomePageProductsV2 = async (
     req: Omit<Request, "body"> & {
         body: { data: ["latest" | "topFavorites" | "topSales" | "topDiscount" | "topRating" | "topBrands"] };
     },
-    res: ApiResponse<HomePageProductResponse[]>, next: NextFunction
+    res: Response<HomePageProductResponse[]>, next: NextFunction
 ) => {
     const { data } = req.body;
 
@@ -347,7 +348,7 @@ export const fetchHomePageProductsV2 = async (
     }
 };
 
-export const topWishlistProducts = async (req: Request, res: ApiResponse) => {};
+export const topWishlistProducts = async (req: Request, res: Response) => {};
 
 type FilterProductIncomingData = {
     in: {
@@ -379,7 +380,7 @@ type FilterProductIncomingData = {
     } | null;
 };
 
-export const filterProducts = async (req: ApiRequest<FilterProductIncomingData>, res: ApiResponse) => {
+export const filterProducts = async (req: ApiRequest<FilterProductIncomingData>, res: Response) => {
     let { in: include, order, pagination, range, search } = req.body;
 
     try {

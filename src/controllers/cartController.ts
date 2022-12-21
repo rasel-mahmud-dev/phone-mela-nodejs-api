@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 import {CartType} from "../models/Cart";
 import {ApiRequest, ApiResponse, RequestWithSession} from "../types";
 import {ObjectId} from "bson";
-import express from "express"
+import express, {NextFunction, Request, Response} from "express"
 
 interface CartItemResponse {
     _id: string
@@ -19,11 +19,11 @@ interface CartItemResponse {
 
 const Cart = mongoose.model("Cart")
 
-export const fetchCartProducts = async (req: RequestWithSession, res: ApiResponse, next) => {
+export const fetchCartProducts = async (req: Request, res: Response, next: NextFunction) => {
 
     try {
         let c: CartItemResponse[] = await Cart.aggregate([
-            {$match: {customer_id: new ObjectId(req.user.userId)},},
+            {$match: {customer_id: new ObjectId(req.auth._id)},},
             {
                 $lookup: {
                     "from": "products",
@@ -62,7 +62,7 @@ export const fetchCartProducts = async (req: RequestWithSession, res: ApiRespons
 
 export const addToCart = async (req: RequestWithSession, res: ApiResponse, next) => {
 
-    let user_id = req.user.userId
+    let user_id = req.auth._id
     const {product_id, quantity} = req.body
 
     let c: CartType = {
