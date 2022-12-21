@@ -1,6 +1,7 @@
-import { ApiRequest, ApiResponse, RequestWithSession } from "../types";
 import { OrderStatusType, OrderType, paymentType } from "../models/Order";
 import mongoose from "mongoose";
+import {NextFunction, Request, Response} from "express";
+import uuid from "../utils/uuid";
 
 const Order = mongoose.model("Order");
 
@@ -17,29 +18,52 @@ interface OrderResponseType {
     title: string;
 }
 
-export const fetchOrders = async (req: RequestWithSession, res: ApiResponse<OrderResponseType | string>) => {
+export const fetchOrders = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const o: any = await Order.find({ customer_id: req.user.userId }).populate("product_id", "title cover");
+        const o: any = await Order.find({ customer_id: req.auth._id }).populate("product_id", "title cover");
         res.send(o);
     } catch (ex) {
-        res.status(500).send("internal error");
+        next(ex)
     }
 };
 
+
+
+export const fetchOrder = async (req: Request, res: Response, next: NextFunction) => {
+    const { orderId } = req.params;
+
+    try {
+        const o: any = await Order.findOne({ orderId: Number(orderId), customer_id: req.auth._id })
+            .populate("product_id", "title cover")
+            .populate("shipping_id");
+        res.send(o);
+
+        console.log(o)
+    } catch (ex) {
+        console.log(ex)
+        next(ex)
+    }
+};
+
+
+
 interface CreateBody {
+
     customer_id: string;
     delivery_date: Date;
     payment_method: paymentType;
-    price: number;
+    totalPrice: number;
     name: string;
     products: any[];
     product_id: string;
     quantity: number;
     shipper_id: string;
     shipping_id: string;
+    description: string
+
 }
 
-export const createOrder = async (req: ApiRequest<CreateBody>, res: ApiResponse<string>) => {
+export const createOrder = async (req: Request<CreateBody>, res: Response, next: NextFunction) => {
     try {
         const {
             customer_id,
@@ -47,53 +71,43 @@ export const createOrder = async (req: ApiRequest<CreateBody>, res: ApiResponse<
             products,
             delivery_date,
             payment_method,
-            price,
+            totalPrice,
             product_id,
             quantity,
+            transactionId,
+            description,
             shipper_id,
             shipping_id,
         } = req.body;
 
         const order: OrderType = {
-            customer_id: customer_id,
-            delivery_date: delivery_date,
-            description: "",
+            customer_id,
+            delivery_date,
+            description,
+            orderId: Number(uuid(6)),
+            transactionId,
             name,
             products,
-            payment_method: payment_method,
-            price: price,
-            product_id: product_id,
-            quantity: quantity,
-            shipper_id: shipper_id,
-            shipping_id: shipping_id,
-            order_status: "delivered",
+            payment_method,
+            price: totalPrice,
+            product_id,
+            quantity,
+            shipper_id,
+            shipping_id,
+            order_status: "pending",
         };
         let doc = new Order(order);
-        await doc.save();
-
-        // const Sales = mongoose.model("Sales")
-        // await new Sales({
-        //   product_id: product_id,
-        //   customer_id: customer_id,
-        //   order_id: doc._id
-        // }).save()
-
-        res.status(201).send("order created successful");
+        doc = await doc.save();
+        if(doc) {
+            res.status(201).json({
+                _id: doc._id,
+                orderId: order.orderId
+            });
+        } else {
+            next(Error("Order create fail"))
+        }
     } catch (ex) {
-        res.status(500).send("order created fail");
+        next(ex)
     }
 };
 
-export const fetchOrder = async (req: ApiRequest, res: ApiResponse) => {
-    const { orderId } = req.params;
-
-    try {
-        // @ts-ignore
-        const o: any = await Order.findOne({ _id: orderId, customer_id: req.user.userId })
-            .populate("product_id", "title cover")
-            .populate("shipping_id");
-        res.send(o);
-    } catch (ex) {
-        res.status(500).send(ex.message);
-    }
-};

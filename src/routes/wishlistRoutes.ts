@@ -1,9 +1,9 @@
-import {Application} from "express";
+import {Application, Router} from "express";
 
 import controllers from "../controllers"
 import {auth} from "../middleware";
 
-const wishlistRoutes = (app: Application)=>{
+const wishlistRoutes = (app: Router)=>{
   
   app.get("/api/wishlist", auth("CUSTOMER"), controllers.wishlistController.fetchWishlistProducts)
   app.post("/api/add-wishlist", auth("CUSTOMER"), controllers.wishlistController.addToWishlist)

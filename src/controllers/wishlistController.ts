@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import {ApiRequest, ApiResponse, RequestWithSession} from "../types";
+import {Request, Response, NextFunction} from "express";
 import {ObjectId} from "bson";
 import {WishListType} from "../models/WishList";
 
@@ -18,7 +18,7 @@ interface WishlistResponse {
 
 const Wishlist = mongoose.model("Wishlist")
 
-export const fetchWishlistProducts = async (req: RequestWithSession, res: ApiResponse) => {
+export const fetchWishlistProducts = async (req: Request, res: Response) => {
     try {
         let c: WishlistResponse[] = await Wishlist.aggregate([
             {$match: {customer_id: new ObjectId(req.user.userId)},},
@@ -48,7 +48,7 @@ export const fetchWishlistProducts = async (req: RequestWithSession, res: ApiRes
 }
 
 
-export const addToWishlist = async (req: RequestWithSession, res: ApiResponse) => {
+export const addToWishlist = async (req: Request, res: Response) => {
     let user_id = req.user.userId
     const {product_id} = req.body
     let c: WishListType = {
@@ -67,7 +67,7 @@ export const addToWishlist = async (req: RequestWithSession, res: ApiResponse) =
 }
 
 
-export const removeToWishlist = async (req: ApiRequest, res: ApiResponse) => {
+export const removeToWishlist = async (req: ApiRequest, res: Response) => {
     const {wishlist_id} = req.body
     try {
         let isRemove = await Wishlist.remove({_id: wishlist_id})

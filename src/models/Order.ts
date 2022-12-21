@@ -1,55 +1,60 @@
 import {ObjectFlags} from "../types";
 import mongoose from "mongoose";
 
-export interface OrderType{
-  _id?: string
-  product_id: string
-  customer_id: string
-  shipper_id: string
-  shipping_id: string
-  order_status: string
-  description: string
-  name: string
+export interface OrderType {
+    _id?: string
+    product_id: string
+    customer_id: string
+    shipper_id: string
+    shipping_id: string
+    order_status: string
+    description: string
+    orderId: number,
+    name: string
     products: any[]
-  price: number
-  quantity: number
-  delivery_date: Date
-  created_at?: string
-  payment_method: paymentType
+    price: number
+    quantity: number
+    delivery_date: Date
+    created_at?: string
+    transactionId: string,
+    payment_method: paymentType
 }
 
-export enum paymentType  {
-  bkash = "bkash",
-  nagod = "nagod",
-  "cash-on-delivery" = "cash-on-delivery",
-  card = "card"
+export enum paymentType {
+    bkash = "bkash",
+    nagod = "nagod",
+    "cash-on-delivery" = "cash-on-delivery",
+    card = "card"
 }
-export enum OrderStatusType  {
-  pending = "pending",
-  delivered = "delivered",
+
+export enum OrderStatusType {
+    pending = "pending",
+    delivered = "delivered",
 }
 
 const schemaObject: ObjectFlags<OrderType> = {
-  quantity: Number,
-  price: Number,
-  description: String,
-  products: Array,
-  name: String,
-  product_id: {type: mongoose.Schema.Types.ObjectId, ref: "Product"},
-  customer_id: {type: mongoose.Schema.Types.ObjectId, ref: "User"},
-  shipper_id: {type: mongoose.Schema.Types.ObjectId, ref: "Shipper"},
-  shipping_id: {type: mongoose.Schema.Types.ObjectId, ref: "ShippingAddress"},
-  order_status: {
-    type: String,
-    enum: ['pending', 'delivered'],
-    message: '{VALUE} is not supported'
-  },
-  delivery_date: Date,
-  payment_method: {
-    type: String,
-    enum: ['bkash', 'nagod', 'cash-on-delivery', 'card'],
-    message: '{VALUE} is not supported'
-  },
+    quantity: Number,
+    price: Number,
+    description: String,
+    orderId: Number,
+    products: Array,
+    name: String,
+    transactionId: String,
+    product_id: {type: mongoose.Schema.Types.ObjectId, ref: "Product"},
+    customer_id: {type: mongoose.Schema.Types.ObjectId, ref: "User"},
+    shipper_id: {type: mongoose.Schema.Types.ObjectId, ref: "Shipper"},
+    shipping_id: {type: mongoose.Schema.Types.ObjectId, ref: "ShippingAddress"},
+    order_status: {
+        type: String,
+        enum: ['pending', 'delivered'],
+        message: '{VALUE} is not supported'
+    },
+    delivery_date: Date,
+    payment_method: {
+        type: String,
+        enum: ['bkash', 'nagod', 'cash-on-delivery', 'card'],
+        message: '{VALUE} is not supported'
+    },
 }
 
 mongoose.model('Order', new mongoose.Schema(schemaObject, {timestamps: true}));
