@@ -4,7 +4,7 @@ import mongoose from "mongoose";
 export interface OrderType {
     _id?: string
     product_id: string
-    customer_id: string
+    customerId: string
     shipper_id: string
     shipping_id: string
     order_status: string
@@ -41,7 +41,7 @@ const schemaObject: ObjectFlags<OrderType> = {
     name: String,
     transactionId: String,
     product_id: {type: mongoose.Schema.Types.ObjectId, ref: "Product"},
-    customer_id: {type: mongoose.Schema.Types.ObjectId, ref: "User"},
+    customerId: {type: mongoose.Schema.Types.ObjectId, ref: "User"},
     shipper_id: {type: mongoose.Schema.Types.ObjectId, ref: "Shipper"},
     shipping_id: {type: mongoose.Schema.Types.ObjectId, ref: "ShippingAddress"},
     order_status: {

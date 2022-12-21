@@ -1,9 +1,10 @@
-import { OrderStatusType, OrderType, paymentType } from "../models/Order";
+import {  OrderType, paymentType } from "../models/Order";
 import mongoose from "mongoose";
 import {NextFunction, Request, Response} from "express";
 import uuid from "../utils/uuid";
 
 const Order = mongoose.model("Order");
+const Transaction = mongoose.model("Transaction");
 
 interface OrderResponseType {
     order_id: string;
@@ -28,19 +29,31 @@ export const fetchOrders = async (req: Request, res: Response, next: NextFunctio
 };
 
 
+export const fetchTransactions = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        let filter: {} = { customer_id: req.auth._id }
+        if(req.auth.role === "ADMIN"){
+            filter = {}
+        }
+        const o: any = await Transaction.find(filter)
+        res.send(o);
+    } catch (ex) {
+        next(ex)
+    }
+};
+
+
 
 export const fetchOrder = async (req: Request, res: Response, next: NextFunction) => {
     const { orderId } = req.params;
 
+
     try {
-        const o: any = await Order.findOne({ orderId: Number(orderId), customer_id: req.auth._id })
-            .populate("product_id", "title cover")
+        const o: any = await Order.findOne({ orderId: Number(orderId), customerId: req.auth._id })
             .populate("shipping_id");
         res.send(o);
 
-        console.log(o)
     } catch (ex) {
-        console.log(ex)
         next(ex)
     }
 };
@@ -63,16 +76,17 @@ interface CreateBody {
 
 }
 
-export const createOrder = async (req: Request<CreateBody>, res: Response, next: NextFunction) => {
+export const createOrder = async (req: Request, res: Response, next: NextFunction) => {
+    let doc;
     try {
         const {
-            customer_id,
+
             name,
             products,
             delivery_date,
             payment_method,
             totalPrice,
-            product_id,
+            product_id = "000000000000000000000000",
             quantity,
             transactionId,
             description,
@@ -81,7 +95,7 @@ export const createOrder = async (req: Request<CreateBody>, res: Response, next:
         } = req.body;
 
         const order: OrderType = {
-            customer_id,
+            customerId: req.auth._id,
             delivery_date,
             description,
             orderId: Number(uuid(6)),
@@ -96,17 +110,34 @@ export const createOrder = async (req: Request<CreateBody>, res: Response, next:
             shipping_id,
             order_status: "pending",
         };
-        let doc = new Order(order);
+        doc = new Order(order);
         doc = await doc.save();
         if(doc) {
+            if(transactionId) {
+                let newTransaction = new Transaction({
+                    order_id: doc._id,
+                    transactionId: transactionId,
+                    customerId: req.auth._id,
+                    price: totalPrice,
+                })
+
+                let result = await newTransaction.save()
+                if (!result) {
+                    throw Error("Order fail")
+                }
+            }
             res.status(201).json({
                 _id: doc._id,
                 orderId: order.orderId
             });
+
         } else {
             next(Error("Order create fail"))
         }
     } catch (ex) {
+        if(doc && doc._id){
+            Order.deleteOne({_id: doc._id})
+        }
         next(ex)
     }
 };

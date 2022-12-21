@@ -60,7 +60,7 @@ export const fetchCartProducts = async (req: Request, res: Response, next: NextF
 }
 
 
-export const addToCart = async (req: RequestWithSession, res: ApiResponse, next) => {
+export const addToCart = async (req: Request, res: Response, next: NextFunction) => {
 
     let user_id = req.auth._id
     const {product_id, quantity} = req.body
@@ -82,10 +82,10 @@ export const addToCart = async (req: RequestWithSession, res: ApiResponse, next)
 }
 
 
-export const removeToCart = async (req: ApiRequest, res: ApiResponse) => {
+export const removeToCart = async (req: Request, res: Response, next: NextFunction) => {
     const {cart_id} = req.body
     try {
-        let isRemove = await Cart.remove({_id: cart_id})
+        let isRemove = await Cart.deleteOne({_id: cart_id})
         if (isRemove.deletedCount > 0) {
             return res.status(201).json({
                 _id: cart_id

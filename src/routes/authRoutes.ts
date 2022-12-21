@@ -21,9 +21,6 @@ const authRoutes = (app: Router) => {
     app.get("/api/auth/customer-profile/:userId", auth(), fetchCustomerProfile);
 
 
-    app.post("/api/auth/create-payment-intent", controllers.authController.createPaymentIntent)
-    app.post("/api/auth/payment", controllers.authController.payment)
-
     app.get('/api/auth/google', passport.authenticate('google', {session: false, scope: ['profile', 'email']}));
 
     function errorCallback(res, message){

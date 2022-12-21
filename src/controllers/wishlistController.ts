@@ -18,10 +18,10 @@ interface WishlistResponse {
 
 const Wishlist = mongoose.model("Wishlist")
 
-export const fetchWishlistProducts = async (req: Request, res: Response) => {
+export const fetchWishlistProducts = async (req: Request, res: Response, next: NextFunction) => {
     try {
         let c: WishlistResponse[] = await Wishlist.aggregate([
-            {$match: {customer_id: new ObjectId(req.user.userId)},},
+            {$match: {customer_id: new ObjectId(req.auth._id)},},
             {
                 $lookup: {
                     "from": "products",
@@ -43,18 +43,20 @@ export const fetchWishlistProducts = async (req: Request, res: Response) => {
         ])
         res.status(200).send(c)
     } catch (ex) {
-        res.status(500).send("internal Server error")
+        next(ex)
     }
 }
 
 
-export const addToWishlist = async (req: Request, res: Response) => {
-    let user_id = req.user.userId
+export const addToWishlist = async (req: Request, res: Response, next: NextFunction) => {
+
     const {product_id} = req.body
+
     let c: WishListType = {
-        customer_id: user_id,
+        customer_id: req.auth._id,
         product_id: product_id
     }
+
     let newWishlist = new Wishlist(c)
     try {
         newWishlist = await newWishlist.save()
@@ -67,10 +69,10 @@ export const addToWishlist = async (req: Request, res: Response) => {
 }
 
 
-export const removeToWishlist = async (req: ApiRequest, res: Response) => {
+export const removeToWishlist = async (req: Request, res: Response, next: NextFunction) => {
     const {wishlist_id} = req.body
     try {
-        let isRemove = await Wishlist.remove({_id: wishlist_id})
+        let isRemove = await Wishlist.deleteOne({ customer_id: req.auth._id, _id: wishlist_id})
         if (isRemove.deletedCount > 0) {
             return res.status(201).json({
                 _id: wishlist_id

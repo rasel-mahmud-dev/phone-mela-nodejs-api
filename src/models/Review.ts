@@ -23,4 +23,4 @@ const schemaObject: ObjectFlags<ReviewType> = {
   customerUploads: [String],
 }
 
-mongoose.model('Review', new mongoose.Schema(schemaObject, {timestamps: true}));
+export default mongoose.model('Review', new mongoose.Schema(schemaObject, {timestamps: true}));

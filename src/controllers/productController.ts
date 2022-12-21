@@ -1,12 +1,14 @@
-import { ApiRequest } from "../types";
+import {ApiRequest} from "../types";
 import {NextFunction, Response, Request} from "express"
-import { ObjectId } from "bson";
+import {ObjectId} from "bson";
 import Sales from "../models/Sales";
 import Product from "../models/Product";
 import Brand from "../models/Brand";
 
+import Review from "../models/Review";
 
-export const fetchProducts = async (req: Request, res: Response) => {
+
+export const fetchProducts = async (req: Request, res: Response, next: NextFunction) => {
     try {
         let data = await Product.find();
         res.send(data);
@@ -16,8 +18,65 @@ export const fetchProducts = async (req: Request, res: Response) => {
 };
 
 
-export const fetchProduct = async (req: Request, res: Response) => {
-    const { id } = req.params;
+export const fetchReviews = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        let data = await Review.aggregate([
+            {
+                $lookup: {
+                    from: "users",
+                    localField: "customer_id",
+                    foreignField: "_id",
+                    as: "customer",
+                }
+            },
+            {$unwind: {path: "$customer", preserveNullAndEmptyArrays: true}},
+            {
+                $project: {
+                    title: 1,
+                    summary: 1,
+                    created_at: 1,
+                    rate: 1,
+                    customerUploads: 1,
+                    customer: {
+                        first_name: 1,
+                        avatar: 1
+                    }
+                }
+            }
+
+        ])
+        res.send(data);
+    } catch (ex) {
+        res.status(500).send([]);
+    }
+};
+
+export const addReview = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const {title, summary, rate=1, product_id} = req.body
+
+        let review = await new Review({
+            title,
+            summary,
+            product_id,
+            rate,
+            customer_id: req.auth._id,
+            customerUploads: []
+        })
+
+        let doc = await review.save()
+        console.log(doc)
+
+        res.status(201).send()
+
+    } catch (ex) {
+        next(ex)
+    }
+};
+
+
+export const fetchProduct = async (req: Request, res: Response, next: NextFunction) => {
+    const {id} = req.params;
 
     try {
         let data = await Product.aggregate([
@@ -49,7 +108,7 @@ export const fetchProduct = async (req: Request, res: Response) => {
                     as: "brand",
                 },
             },
-            { $unwind: { path: "$brand", preserveNullAndEmptyArrays: true } },
+            {$unwind: {path: "$brand", preserveNullAndEmptyArrays: true}},
         ]);
 
         if (data[0]) {
@@ -60,13 +119,14 @@ export const fetchProduct = async (req: Request, res: Response) => {
     }
 };
 
-export const addProduct = async (req: Request, res: Response) => {};
+export const addProduct = async (req: Request, res: Response, next: NextFunction) => {
+};
 
 export const updateProduct = async (req: ApiRequest, res: Response) => {
-    const { productId } = req.params;
+    const {productId} = req.params;
 
     try {
-        const { attributes, brand_id, cover, description, discount, price, stock, tags, title, _id } = req.body;
+        const {attributes, brand_id, cover, description, discount, price, stock, tags, title, _id} = req.body;
         let updateProduct: any = {};
         if (attributes) updateProduct.attributes = attributes;
         if (brand_id) updateProduct.brand_id = brand_id;
@@ -83,12 +143,12 @@ export const updateProduct = async (req: ApiRequest, res: Response) => {
         });
 
         if (doc) {
-            res.status(201).json({ message: "updated" });
+            res.status(201).json({message: "updated"});
         } else {
-            res.status(500).json({ message: "no updated" });
+            res.status(500).json({message: "no updated"});
         }
     } catch (ex) {
-        res.status(500).json({ message: ex.message });
+        res.status(500).json({message: ex.message});
     }
 };
 
@@ -118,11 +178,11 @@ export const fetchHomePageProducts = async (
     res: Response<HomePageProductResponse[]>
 ) => {
     let products = [];
-    const { type } = req.body;
+    const {type} = req.body;
     if (type === "latest") {
-        products = await Product.find({}).sort({ createdAt: "desc" }).limit(10);
+        products = await Product.find({}).sort({createdAt: "desc"}).limit(10);
     } else if (type === "top_discount") {
-        products = await Product.find({}).sort({ discount: "desc" }).limit(10);
+        products = await Product.find({}).sort({discount: "desc"}).limit(10);
     } else if (type === "top_rating") {
         products = await Product.aggregate([
             {
@@ -145,7 +205,7 @@ export const fetchHomePageProducts = async (
                     averageRate: -1,
                 },
             },
-            { $limit: 10 },
+            {$limit: 10},
         ]);
     } else if (type === "top_sales") {
         products = await Sales.aggregate([
@@ -155,7 +215,7 @@ export const fetchHomePageProducts = async (
                         product_id: "$product_id",
                         order_id: "$order_id",
                     },
-                    sold: { $sum: 1 },
+                    sold: {$sum: 1},
                 },
             },
             {
@@ -164,7 +224,7 @@ export const fetchHomePageProducts = async (
                     order_id: "$_id.order_id",
                 },
             },
-            { $project: { _id: 0 } },
+            {$project: {_id: 0}},
             {
                 $lookup: {
                     from: "products",
@@ -173,7 +233,7 @@ export const fetchHomePageProducts = async (
                     as: "product",
                 },
             },
-            { $unwind: { path: "$product", preserveNullAndEmptyArrays: true } },
+            {$unwind: {path: "$product", preserveNullAndEmptyArrays: true}},
             {
                 $addFields: {
                     cover: "$product.cover",
@@ -191,7 +251,7 @@ export const fetchHomePageProducts = async (
                     as: "order",
                 },
             },
-            { $unwind: { path: "$order", preserveNullAndEmptyArrays: true } },
+            {$unwind: {path: "$order", preserveNullAndEmptyArrays: true}},
             {
                 $addFields: {
                     totalPrice: "$order.price",
@@ -203,8 +263,8 @@ export const fetchHomePageProducts = async (
                     product: 0,
                 },
             },
-            { $sort: { sold: -1 } },
-            { $limit: 20 },
+            {$sort: {sold: -1}},
+            {$limit: 20},
         ]);
     }
     res.send(products);
@@ -217,7 +277,7 @@ export const fetchHomePageProductsV2 = async (
     },
     res: Response<HomePageProductResponse[]>, next: NextFunction
 ) => {
-    const { data } = req.body;
+    const {data} = req.body;
 
     let products: any = {};
 
@@ -240,16 +300,16 @@ export const fetchHomePageProductsV2 = async (
         // if redis cache also not found then fetch from mongodb
         for (let section of data) {
             if (section === "topBrands") {
-                products[section] = await Brand.find({}).sort({ createdAt: "desc" }).limit(50);
+                products[section] = await Brand.find({}).sort({createdAt: "desc"}).limit(50);
             }
             if (section === "latest") {
-                products[section] = await Product.find({}).sort({ createdAt: "desc" }).limit(10);
+                products[section] = await Product.find({}).sort({createdAt: "desc"}).limit(10);
             }
             if (section === "topFavorites") {
                 // products[section] = await  Product.find({}).sort({ createdAt: 'desc'}).limit(10)
             }
             if (section === "topDiscount") {
-                products[section] = await Product.find({}).sort({ discount: "desc" }).limit(10);
+                products[section] = await Product.find({}).sort({discount: "desc"}).limit(10);
             }
             if (section === "topRating") {
                 products[section] = await Product.aggregate([
@@ -273,7 +333,7 @@ export const fetchHomePageProductsV2 = async (
                             averageRate: -1,
                         },
                     },
-                    { $limit: 10 },
+                    {$limit: 10},
                 ]);
             }
             if (section === "topSales") {
@@ -284,7 +344,7 @@ export const fetchHomePageProductsV2 = async (
                                 product_id: "$product_id",
                                 order_id: "$order_id",
                             },
-                            sold: { $sum: 1 },
+                            sold: {$sum: 1},
                         },
                     },
                     {
@@ -293,7 +353,7 @@ export const fetchHomePageProductsV2 = async (
                             order_id: "$_id.order_id",
                         },
                     },
-                    { $project: { _id: 0 } },
+                    {$project: {_id: 0}},
                     {
                         $lookup: {
                             from: "products",
@@ -302,7 +362,7 @@ export const fetchHomePageProductsV2 = async (
                             as: "product",
                         },
                     },
-                    { $unwind: { path: "$product", preserveNullAndEmptyArrays: true } },
+                    {$unwind: {path: "$product", preserveNullAndEmptyArrays: true}},
                     {
                         $addFields: {
                             cover: "$product.cover",
@@ -320,7 +380,7 @@ export const fetchHomePageProductsV2 = async (
                             as: "order",
                         },
                     },
-                    { $unwind: { path: "$order", preserveNullAndEmptyArrays: true } },
+                    {$unwind: {path: "$order", preserveNullAndEmptyArrays: true}},
                     {
                         $addFields: {
                             totalPrice: "$order.price",
@@ -332,8 +392,8 @@ export const fetchHomePageProductsV2 = async (
                             product: 0,
                         },
                     },
-                    { $sort: { sold: -1 } },
-                    { $limit: 20 },
+                    {$sort: {sold: -1}},
+                    {$limit: 20},
                 ]);
             }
         }
@@ -348,7 +408,8 @@ export const fetchHomePageProductsV2 = async (
     }
 };
 
-export const topWishlistProducts = async (req: Request, res: Response) => {};
+export const topWishlistProducts = async (req: Request, res: Response, next: NextFunction) => {
+};
 
 type FilterProductIncomingData = {
     in: {
@@ -381,7 +442,7 @@ type FilterProductIncomingData = {
 };
 
 export const filterProducts = async (req: ApiRequest<FilterProductIncomingData>, res: Response) => {
-    let { in: include, order, pagination, range, search } = req.body;
+    let {in: include, order, pagination, range, search} = req.body;
 
     try {
         let includeAttributes = {
@@ -401,29 +462,29 @@ export const filterProducts = async (req: ApiRequest<FilterProductIncomingData>,
                 // convert all string _id to mongodb ObjectId
                 let objectIds = [];
                 include[includeKey] &&
-                    include[includeKey].length > 0 &&
-                    include[includeKey].map((id) => {
-                        objectIds.push(new ObjectId(id));
-                    });
+                include[includeKey].length > 0 &&
+                include[includeKey].map((id) => {
+                    objectIds.push(new ObjectId(id));
+                });
 
                 if (objectIds.length > 0) {
                     // brand_id: { '$in': [ 1, 2, 3 ] },
-                    includeAttributes[includeKey] = { $in: objectIds };
+                    includeAttributes[includeKey] = {$in: objectIds};
                 }
             } else {
                 let values = [];
                 // all like attributes
                 include[includeKey] &&
-                    include[includeKey].length > 0 &&
-                    include[includeKey].map((item) => {
-                        if (typeof item === "string") {
-                            values.push(item);
-                        } else if (typeof item === "number") {
-                            values.push(item);
-                        }
-                    });
+                include[includeKey].length > 0 &&
+                include[includeKey].map((item) => {
+                    if (typeof item === "string") {
+                        values.push(item);
+                    } else if (typeof item === "number") {
+                        values.push(item);
+                    }
+                });
                 if (values.length > 0) {
-                    includeAttributes["attributes." + includeKey] = { $in: values };
+                    includeAttributes["attributes." + includeKey] = {$in: values};
                 }
             }
         }
@@ -459,7 +520,7 @@ export const filterProducts = async (req: ApiRequest<FilterProductIncomingData>,
 
         let andFilter;
         if (rangeFilter.length > 0) {
-            andFilter = { $and: [...rangeFilter] };
+            andFilter = {$and: [...rangeFilter]};
             console.log(andFilter.$and);
         }
 
@@ -538,13 +599,13 @@ export const filterProducts = async (req: ApiRequest<FilterProductIncomingData>,
                     as: "brand",
                 },
             },
-            { $unwind: { path: "$brand", preserveNullAndEmptyArrays: true } },
-            { ...sorting },
+            {$unwind: {path: "$brand", preserveNullAndEmptyArrays: true}},
+            {...sorting},
         ]);
 
         // console.log(data.map(d=>d.order))
 
-        res.json({ products: data });
+        res.json({products: data});
     } catch (ex) {
         console.log(ex);
     }
