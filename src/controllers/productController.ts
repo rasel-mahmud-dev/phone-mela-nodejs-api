@@ -7,7 +7,7 @@ import Brand from "../models/Brand";
 import Review from "../models/Review";
 import path from "path";
 import * as fs from "fs";
-import {logout} from "./userController";
+import ProductDetail from "../models/ProductDetail";
 
 
 export const fetchProducts = async (req: Request, res: Response, next: NextFunction) => {
@@ -152,7 +152,7 @@ export const fetchProduct = async (req: Request, res: Response, next: NextFuncti
 export const addProduct = async (req: Request<any>, res: Response, next: NextFunction) => {
 
     try {
-        const {attributes, brand_id, cover, description, discount, price, stock, tags, title } = req.body;
+        const {attributes, brand_id, cover, description, discount, details, price, stock, tags, title } = req.body;
 
         let productData: any = {};
         if (attributes) productData.attributes = attributes;
@@ -168,7 +168,32 @@ export const addProduct = async (req: Request<any>, res: Response, next: NextFun
         let doc = new Product( productData);
         doc  = await doc.save()
         if (doc) {
-            res.status(201).json(doc);
+            let doc2 = new ProductDetail({
+                productId: doc._id,
+                detail: details,
+                description: `
+                Let go of the inhibitions and enjoy speed operation and flawless user experience with Redmi 10. This phone is powered by Snapdragon 680 processor with a savvy 6 nm architecture that makes juggling fun. This device is incorporated with 4 GB of RAM and 64 GB of internal storage that provides you with seamless efficiency. With the UFS 2.2 storage, you can experience an unmatched speed in the operation. This smartphone boasts a large 6000 mAh battery with an 18 W fast charging capability giving your phone a necessary boost to achieve optimal efficiency. With a mesmerising 17.04 cm (6.71) display and a 20.6:9 aspect ratio, Redmi 10 offers an immersive user experience. The Redmi 10 is equipped with a 50 MP camera and a 2 MP depth sensor allowing you to capture breathtaking pictures with enthralling imagery. 
+                `,
+                highlights: [
+                    "4 GB RAM | 64 GB ROM | Expandable Upto 1 TB",
+                    "17.02 cm (6.7 inch) HD+ Display",
+                    "No cost EMI starting from 2300/month",
+                    "50MP + 2MP | 5MP Front Camera",
+                    "6000 mAh Lithium Polymer Battery",
+                    "Qualcomm Snapdragon 680 Processor"
+                ],
+                ram: [4, 6, 8],
+                storage: [64, 128],
+                colors: ["blue", "black"]
+            })
+
+            doc2.save().then(()=>{
+                res.status(201).json(doc);
+            }).catch(async (ex)=>{
+                await Product.deleteOne({_id: doc._id})
+                next(Error("Product adding fail"))
+            })
+
         } else {
             next(Error("Product adding fail"))
         }
@@ -176,6 +201,7 @@ export const addProduct = async (req: Request<any>, res: Response, next: NextFun
         next(ex)
     }
 };
+
 
 
 export const updateProduct = async (req: Request, res: Response, next: NextFunction) => {

@@ -10,4 +10,5 @@ import "./ShippingAddress"
 import "./Sales"
 import "./Review"
 import "./Transaction"
+import "./ProductDetail"
 
