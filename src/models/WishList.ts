@@ -1,6 +1,9 @@
 
-import mongoose from "mongoose";
+import mongoose from "mongoose"
 import {ObjectFlags} from "../types";
+
+
+
 
 export type WishListType = {
   _id?: string

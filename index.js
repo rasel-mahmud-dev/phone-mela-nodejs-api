@@ -1,4 +1,4 @@
-const app = require("./dist")
+const app = require("./dist/app.js")
 
 const PORT =  process.env.PORT || 3000
 

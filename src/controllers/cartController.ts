@@ -1,7 +1,8 @@
 import mongoose from "mongoose";
 import {CartType} from "../models/Cart";
-import {ApiRequest, ApiResponse, RequestWithSession} from "../types";
+
 import {ObjectId} from "bson";
+
 import express, {NextFunction, Request, Response} from "express"
 
 interface CartItemResponse {

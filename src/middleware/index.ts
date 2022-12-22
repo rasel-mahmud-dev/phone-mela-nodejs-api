@@ -1,5 +1,6 @@
 import {getToken, parseToken} from "../jwt";
 import {NextFunction, Request, Response} from "express";
+import {addProduct} from "../controllers/productController";
 
 
 export function auth(...roles: string[]) {
@@ -16,7 +17,6 @@ export function auth(...roles: string[]) {
                 if (!roles || roles.length === 0) {
                     return next()
                 }
-
                 if (roles.includes(data.role)) {
                     next()
                 } else {

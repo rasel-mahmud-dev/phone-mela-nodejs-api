@@ -1,4 +1,3 @@
-import {ApiRequest} from "../types";
 import {NextFunction, Response, Request} from "express"
 import {ObjectId} from "bson";
 import Sales from "../models/Sales";
@@ -6,6 +5,9 @@ import Product from "../models/Product";
 import Brand from "../models/Brand";
 
 import Review from "../models/Review";
+import path from "path";
+import * as fs from "fs";
+import {logout} from "./userController";
 
 
 export const fetchProducts = async (req: Request, res: Response, next: NextFunction) => {
@@ -20,20 +22,25 @@ export const fetchProducts = async (req: Request, res: Response, next: NextFunct
 
 export const fetchReviews = async (req: Request, res: Response, next: NextFunction) => {
 
-    const { pageNumber = 1 } = req.query;
+    const {pageNumber = 1, product_id} = req.query;
 
 
     try {
 
         let count = 0
-        let pageSize = 5
+        let pageSize = 10
 
 
-        if(pageNumber == 1){
+        if (pageNumber == 1) {
             count = await Review.countDocuments();
         }
 
         let data = await Review.aggregate([
+            // { $match: {
+            //     product_id: new ObjectId(product_id)
+            //     }
+            // },
+
             {
                 $lookup: {
                     from: "users",
@@ -61,8 +68,8 @@ export const fetchReviews = async (req: Request, res: Response, next: NextFuncti
                     createdAt: -1
                 }
             },
-            { $skip: (Number(pageNumber) - 1) * pageSize },
-            { $limit: pageSize},
+            {$skip: (Number(pageNumber) - 1) * pageSize},
+            {$limit: pageSize},
         ])
         res.status(200).json({
             reviews: data,
@@ -142,11 +149,38 @@ export const fetchProduct = async (req: Request, res: Response, next: NextFuncti
     }
 };
 
-export const addProduct = async (req: Request, res: Response, next: NextFunction) => {
+export const addProduct = async (req: Request<any>, res: Response, next: NextFunction) => {
+
+    try {
+        const {attributes, brand_id, cover, description, discount, price, stock, tags, title } = req.body;
+
+        let productData: any = {};
+        if (attributes) productData.attributes = attributes;
+        if (brand_id) productData.brand_id = brand_id;
+        if (cover) productData.cover = cover;
+        if (discount) productData.discount = discount;
+        if (price) productData.price = price;
+        if (stock) productData.stock = stock;
+        if (tags) productData.tags = tags;
+        if (title) productData.title = title;
+        if (description) productData.description = description;
+
+        let doc = new Product( productData);
+        doc  = await doc.save()
+        if (doc) {
+            res.status(201).json(doc);
+        } else {
+            next(Error("Product adding fail"))
+        }
+    } catch (ex) {
+        next(ex)
+    }
 };
 
-export const updateProduct = async (req: ApiRequest, res: Response) => {
+
+export const updateProduct = async (req: Request, res: Response, next: NextFunction) => {
     const {productId} = req.params;
+
 
     try {
         const {attributes, brand_id, cover, description, discount, price, stock, tags, title, _id} = req.body;
@@ -168,10 +202,10 @@ export const updateProduct = async (req: ApiRequest, res: Response) => {
         if (doc) {
             res.status(201).json({message: "updated"});
         } else {
-            res.status(500).json({message: "no updated"});
+            next(Error("Product update fail"))
         }
     } catch (ex) {
-        res.status(500).json({message: ex.message});
+        next(ex)
     }
 };
 
@@ -293,6 +327,18 @@ export const fetchHomePageProducts = async (
     res.send(products);
 };
 
+
+function createCache(data) {
+    fs.writeFile(path.resolve("static/data.json"), JSON.stringify(data, undefined, 4), {}, (err) => {
+        console.log(err)
+    })
+}
+
+function getCache() {
+    let data = fs.readFileSync(path.resolve("static/data.json"), "utf8")
+    return JSON.parse(data)
+}
+
 let cachedData;
 export const fetchHomePageProductsV2 = async (
     req: Omit<Request, "body"> & {
@@ -304,12 +350,14 @@ export const fetchHomePageProductsV2 = async (
 
     let products: any = {};
 
-    let client;
+
     try {
-        // first find store memory catch
-        if (cachedData) {
-            return res.send(cachedData);
+        // if not cache data then load data from local json files
+        if (!cachedData) {
+            let data = getCache()
+            return res.send(data);
         }
+
 
         // if memory cache is undefined then find from redis cache
         // client = await redisConnect();
@@ -420,9 +468,13 @@ export const fetchHomePageProductsV2 = async (
                 ]);
             }
         }
-
         res.send(products);
         cachedData = products;
+
+
+        // createCache(products)
+
+
         // await client.set("phone_mela_homepage_data", JSON.stringify(products));
     } catch (ex) {
         next(ex);
@@ -464,7 +516,7 @@ type FilterProductIncomingData = {
     } | null;
 };
 
-export const filterProducts = async (req: ApiRequest<FilterProductIncomingData>, res: Response) => {
+export const filterProducts = async (req: Request<FilterProductIncomingData>, res: Response, next: NextFunction) => {
     let {in: include, order, pagination, range, search} = req.body;
 
     try {
@@ -544,7 +596,6 @@ export const filterProducts = async (req: ApiRequest<FilterProductIncomingData>,
         let andFilter;
         if (rangeFilter.length > 0) {
             andFilter = {$and: [...rangeFilter]};
-            console.log(andFilter.$and);
         }
 
         let searchFilter;
@@ -626,10 +677,11 @@ export const filterProducts = async (req: ApiRequest<FilterProductIncomingData>,
             {...sorting},
         ]);
 
-        // console.log(data.map(d=>d.order))
 
         res.json({products: data});
+
+
     } catch (ex) {
-        console.log(ex);
+        next(ex)
     }
 };

@@ -1,8 +1,8 @@
 import mongoose from "mongoose";
-import {ApiResponse} from "../types";
+import {Request, Response} from "express";
 
 
-export const fetchBrands = async (req: Request, res: ApiResponse)=> {
+export const fetchBrands = async (req: Request, res: Response)=> {
   
   try {
     const Brand = mongoose.model("Brand")

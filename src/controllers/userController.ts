@@ -1,12 +1,10 @@
 import {NextFunction, Request, Response} from "express";
 
-import {RequestWithSession} from "../types";
 import User from "../models/User";
-import {Types} from "mongoose";
 import {ObjectId} from "bson";
 
 
-export const logout = async (req: RequestWithSession, res: Response, next: NextFunction) => {
+export const logout = async (req: Request, res: Response, next: NextFunction) => {
     // if(req.session) {
     //   req.session = null
     //   res.status(201).json({message: "You are logout"});
@@ -14,7 +12,7 @@ export const logout = async (req: RequestWithSession, res: Response, next: NextF
 }
 
 
-export const getAllCustomers = async (req: RequestWithSession, res: Response, next: NextFunction) => {
+export const getAllCustomers = async (req: Request, res: Response, next: NextFunction) => {
     try {
         let users = await User.find({}, "-password")
         res.status(200).send(users)
@@ -24,7 +22,7 @@ export const getAllCustomers = async (req: RequestWithSession, res: Response, ne
 
 }
 
-export const changeCustomerAccountStatus = async (req: RequestWithSession, res: Response, next: NextFunction) => {
+export const changeCustomerAccountStatus = async (req: Request, res: Response, next: NextFunction) => {
     const {isBlock, customerId} = req.body
     try {
         let doc = await User.updateOne({

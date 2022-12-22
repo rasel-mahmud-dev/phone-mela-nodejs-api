@@ -1,11 +1,13 @@
 import {Application, Router} from "express";
 
 import controllers from "../controllers"
-import {fetchProducts} from "../controllers/productController";
+import {addProduct, fetchProducts} from "../controllers/productController";
 import {auth} from "../middleware";
 
 
 const productRoutes = (app: Router)=>{
+
+
   app.get("/api/products", fetchProducts)
 
   app.get("/api/product/:id", controllers.productController.fetchProduct)
@@ -15,8 +17,9 @@ const productRoutes = (app: Router)=>{
   app.post("/api/top-wishlist-products", controllers.productController.topWishlistProducts)
   
   
-  app.post("/api/add-product", auth("ADMIN"), controllers.productController.addProduct)
-  app.put("/api/products/update/:productId", auth("ADMIN"), controllers.productController.updateProduct)
+  app.post("/api/add-product", auth("ADMIN", "SELLER"), controllers.productController.addProduct)
+
+  app.put("/api/products/update/:productId", auth("ADMIN", "SELLER"), controllers.productController.updateProduct)
   
   app.post("/api/v2/filter-products", controllers.productController.filterProducts)
 
