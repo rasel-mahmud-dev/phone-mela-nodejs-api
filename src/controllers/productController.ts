@@ -149,6 +149,28 @@ export const fetchProduct = async (req: Request, res: Response, next: NextFuncti
     }
 };
 
+export const fetchProductDetail = async (req: Request, res: Response, next: NextFunction) => {
+    const {productId} = req.params;
+
+    try {
+        let data = await ProductDetail.aggregate([
+            {
+                $match: {
+                    productId: new ObjectId("63a46e9e0cb9967922e1dc13"), // fake for development
+                    // productId: new ObjectId(productId as string),
+                },
+            }
+        ]);
+        if (data[0]) {
+            res.status(200).send(data[0]);
+        } else {
+            next(Error("Detail not found"))
+        }
+    } catch (ex) {
+        next(ex)
+    }
+};
+
 export const addProduct = async (req: Request<any>, res: Response, next: NextFunction) => {
 
     try {

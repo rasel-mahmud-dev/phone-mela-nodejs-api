@@ -1,7 +1,7 @@
 import {Application, Router} from "express";
 
 import controllers from "../controllers"
-import {addProduct, fetchProducts} from "../controllers/productController";
+import {fetchProducts} from "../controllers/productController";
 import {auth} from "../middleware";
 
 
@@ -20,7 +20,9 @@ const productRoutes = (app: Router)=>{
   app.post("/api/add-product", auth("ADMIN", "SELLER"), controllers.productController.addProduct)
 
   app.put("/api/products/update/:productId", auth("ADMIN", "SELLER"), controllers.productController.updateProduct)
-  
+
+  app.get("/api/product/detail/:productId",  controllers.productController.fetchProductDetail)
+
   app.post("/api/v2/filter-products", controllers.productController.filterProducts)
 
   app.get("/api/reviews/:productId", controllers.productController.fetchReviews)
