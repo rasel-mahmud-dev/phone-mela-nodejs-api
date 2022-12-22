@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import mongoose, {Schema} from "mongoose";
 import {ObjectFlags} from "../types";
 
 type ProductDetailsType = {
@@ -9,9 +9,9 @@ type ProductDetailsType = {
     highlights: string
     ram: string
     storage: string
+    questions: [],
     colors: string
 }
-
 
 
 const schemaObject: ObjectFlags<ProductDetailsType> = {
@@ -21,6 +21,13 @@ const schemaObject: ObjectFlags<ProductDetailsType> = {
         unique: true,
         index: true
     },
+    questions: [new Schema({
+        customerId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
+        },
+        question: String, answer: String, createdAt: Date
+    })],
     detail: Object,
     highlights: Array,
     description: String,

@@ -80,24 +80,35 @@ export const fetchReviews = async (req: Request, res: Response, next: NextFuncti
     }
 };
 
-export const addReview = async (req: Request, res: Response, next: NextFunction) => {
+
+export const fetchQuestions = async (req: Request, res: Response, next: NextFunction) => {
+
+    const {productId} = req.params;
+
     try {
-        const {title, summary, rate = 1, product_id} = req.body
+        let data = await ProductDetail.aggregate([
+            { $match: { productId: new ObjectId(productId)  } },
+            // need to lookup for subdocument
+            // {
+            //     $lookup: {
+            //         from: "users",
+            //         foreignField: "_id",
+            //         localField: "questions.customerId",
+            //         as: "customer"
+            //     }
+            // },
+            // { $unwind: { path: "$customer", preserveNullAndEmptyArrays: true } },
+            {
+                $project: {
+                    questions: 1,
+                }
+            }
+        ]);
 
-        let review = await new Review({
-            title,
-            summary,
-            product_id,
-            rate,
-            customer_id: req.auth._id,
-            customerUploads: []
-        })
-
-        let doc = await (await review.save()).populate("customer_id", "first_name avatar")
-        if (doc) {
-            res.status(201).send(doc)
+        if (data && data.length > 0) {
+            res.status(200).send(data[0]?.questions || []);
         } else {
-            next(Error("Rating add fail"))
+            next(Error("Detail not found"))
         }
     } catch (ex) {
         next(ex)
@@ -156,9 +167,13 @@ export const fetchProductDetail = async (req: Request, res: Response, next: Next
         let data = await ProductDetail.aggregate([
             {
                 $match: {
-                    productId: new ObjectId("63a46e9e0cb9967922e1dc13"), // fake for development
-                    // productId: new ObjectId(productId as string),
+                    productId: new ObjectId(productId as string),
                 },
+            },
+            {
+                $project: {
+                    questions: 0
+                }
             }
         ]);
         if (data[0]) {
@@ -174,7 +189,7 @@ export const fetchProductDetail = async (req: Request, res: Response, next: Next
 export const addProduct = async (req: Request<any>, res: Response, next: NextFunction) => {
 
     try {
-        const {attributes, brand_id, cover, description, discount, details, price, stock, tags, title } = req.body;
+        const {attributes, brand_id, cover, description, discount, details, price, stock, tags, title} = req.body;
 
         let productData: any = {};
         if (attributes) productData.attributes = attributes;
@@ -187,8 +202,8 @@ export const addProduct = async (req: Request<any>, res: Response, next: NextFun
         if (title) productData.title = title;
         if (description) productData.description = description;
 
-        let doc = new Product( productData);
-        doc  = await doc.save()
+        let doc = new Product(productData);
+        doc = await doc.save()
         if (doc) {
             let doc2 = new ProductDetail({
                 productId: doc._id,
@@ -209,9 +224,9 @@ export const addProduct = async (req: Request<any>, res: Response, next: NextFun
                 colors: ["blue", "black"]
             })
 
-            doc2.save().then(()=>{
+            doc2.save().then(() => {
                 res.status(201).json(doc);
-            }).catch(async (ex)=>{
+            }).catch(async (ex) => {
                 await Product.deleteOne({_id: doc._id})
                 next(Error("Product adding fail"))
             })
@@ -223,7 +238,6 @@ export const addProduct = async (req: Request<any>, res: Response, next: NextFun
         next(ex)
     }
 };
-
 
 
 export const updateProduct = async (req: Request, res: Response, next: NextFunction) => {
@@ -733,3 +747,55 @@ export const filterProducts = async (req: Request<FilterProductIncomingData>, re
         next(ex)
     }
 };
+
+
+export const addReview = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const {title, summary, rate = 1, product_id} = req.body
+
+        let review = await new Review({
+            title,
+            summary,
+            product_id,
+            rate,
+            customer_id: req.auth._id,
+            customerUploads: []
+        })
+
+        let doc = await (await review.save()).populate("customer_id", "first_name avatar")
+        if (doc) {
+            res.status(201).send(doc)
+        } else {
+            next(Error("Rating add fail"))
+        }
+    } catch (ex) {
+        next(ex)
+    }
+};
+
+export const addQuestion = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const {question, answer = "", productId} = req.body
+
+        let detail = await ProductDetail.findOne({productId: new ObjectId(productId)})
+        if (detail) {
+            let cp = detail.questions || []
+
+            cp.push({question: question, answer: "", customerId: req.auth._id, createdAt: new Date()})
+            let doc = await ProductDetail.updateOne({productId: new ObjectId(productId)},
+                {$set: {questions: cp}})
+
+            if (doc.modifiedCount) {
+                res.status(201).send(cp)
+            } else {
+                next(Error("Question add fail"))
+            }
+        } else {
+            next(Error("Question add fail"))
+        }
+
+    } catch (ex) {
+        next(ex)
+    }
+};
+

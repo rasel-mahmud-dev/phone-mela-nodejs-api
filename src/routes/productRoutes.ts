@@ -27,6 +27,9 @@ const productRoutes = (app: Router)=>{
 
   app.get("/api/reviews/:productId", controllers.productController.fetchReviews)
 
-  app.post("/api/review", auth("CUSTOMER"), controllers.productController.addReview)
+  app.post("/api/review", auth("CUSTOMER", "ADMIN"), controllers.productController.addReview)
+
+  app.post("/api/product/question", auth("CUSTOMER", "ADMIN"), controllers.productController.addQuestion)
+  app.get("/api/product/questions/:productId", auth("CUSTOMER", "ADMIN"), controllers.productController.fetchQuestions)
 }
 export default productRoutes

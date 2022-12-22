@@ -5,10 +5,10 @@ import {auth} from "../middleware";
 
 const wishlistRoutes = (app: Router)=>{
   
-  app.get("/api/wishlist", auth("CUSTOMER"), controllers.wishlistController.fetchWishlistProducts)
-  app.post("/api/add-wishlist", auth("CUSTOMER"), controllers.wishlistController.addToWishlist)
+  app.get("/api/wishlist", auth("CUSTOMER", "ADMIN"), controllers.wishlistController.fetchWishlistProducts)
+  app.post("/api/add-wishlist", auth("CUSTOMER", "ADMIN"), controllers.wishlistController.addToWishlist)
   
-  app.post("/api/remove-wishlist", auth("CUSTOMER"), controllers.wishlistController.removeToWishlist)
+  app.post("/api/remove-wishlist", auth("CUSTOMER", "ADMIN"), controllers.wishlistController.removeToWishlist)
 }
 
 export default wishlistRoutes
